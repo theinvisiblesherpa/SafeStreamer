@@ -10,7 +10,7 @@ import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 import pickle
 
-use_full = True
+use_full = False
 if use_full:
     setSize = "large"
 else: 
