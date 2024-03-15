@@ -11,7 +11,12 @@ import CallDtDDAPI as dtdd
 import os,sys
 import pickle
 
-setSize = sys.argv[1]
+use_full = False
+
+if use_full:
+    setSize = "large"
+else: 
+    setSize = "small"
 
 movies = pd.read_csv("./Datasets/"+setSize+"/movies.csv")
 links = pd.read_csv("./Datasets/"+setSize+"/links.csv",usecols=['movieId','tmdbId'])

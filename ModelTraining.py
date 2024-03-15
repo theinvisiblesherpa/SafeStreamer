@@ -10,7 +10,12 @@ import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 import pickle, sys
 
-setSize = sys.argv[1]
+use_full = False
+
+if use_full:
+    setSize = "large"
+else: 
+    setSize = "small"
 
 def bayes_sum(N, mu):
     return lambda x: (x.sum() + mu*N) / (x.count() + N)

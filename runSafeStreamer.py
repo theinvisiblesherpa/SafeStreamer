@@ -14,7 +14,12 @@ import pickle, joblib
 st.title('Safe Streamer')
 st.markdown("Please rate the following movies, select your preferred genres, and select the content you wish to avoid. Click the button below and receive your recommendations!")
 
-setSize = sys.argv[1]
+use_full = False
+
+if use_full:
+    setSize = "large"
+else: 
+    setSize = "small"
 
 # List of all potential Triggers
 with open('./Datasets/'+setSize+'/TrigList.pkl','rb') as trigPick:
