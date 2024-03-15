@@ -8,7 +8,7 @@ Created on Mon Feb  5 17:03:36 2024
 
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
-import pickle, sys
+import os,pickle
 
 use_full = False
 
@@ -20,20 +20,24 @@ else:
 def bayes_sum(N, mu):
     return lambda x: (x.sum() + mu*N) / (x.count() + N)
 
-movies = pd.read_csv("./Datasets/"+setSize+"/movies.csv")
-links = pd.read_csv("./Datasets/"+setSize+"/links.csv",usecols=['movieId','tmdbId'])
-ratings = pd.read_csv("./Datasets/"+setSize+"/ratings.csv",usecols=['userId','movieId','rating'])
-trigDF = pd.read_pickle("./Datasets/"+setSize+"/TrigInfo.pkl")
-#tags = pd.read_csv("./Datasets/"+setSize+"/tags.csv")
 
-# Make the Used DFs and remove the rest
-moviesWLinks = pd.merge(movies, links)
-userReviews = pd.merge(ratings, moviesWLinks, how="left")
-del movies, links
+if not os.path.isfile("./Datasets/"+setSize+"/UserMovieDB.pkl", 'wb'):
 
-with open("./Datasets/"+setSize+"/UserMovieDB.pkl", 'wb') as UserMoviePick:    
-    pickle.dump(userReviews, UserMoviePick)
+    movies = pd.read_csv("./Datasets/"+setSize+"/movies.csv")
+    links = pd.read_csv("./Datasets/"+setSize+"/links.csv",usecols=['movieId','tmdbId'])
+    ratings = pd.read_csv("./Datasets/"+setSize+"/ratings.csv",usecols=['userId','movieId','rating'])
+    trigDF = pd.read_pickle("./Datasets/"+setSize+"/TrigInfo.pkl")
+    #tags = pd.read_csv("./Datasets/"+setSize+"/tags.csv")
 
+    # Make the Used DFs and remove the rest
+    moviesWLinks = pd.merge(movies, links)
+    userReviews = pd.merge(ratings, moviesWLinks, how="left")
+    del movies, links
+
+    with open("./Datasets/"+setSize+"/UserMovieDB.pkl", 'wb') as UserMoviePick:    
+        pickle.dump(userReviews, UserMoviePick)
+else:
+    userReviews = pickle.load("./Datasets/"+setSize+"/UserMovieDB.pkl")
 
 # Train nearest neighbors model
 def trainNNModel(inData):
