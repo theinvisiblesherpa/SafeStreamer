@@ -64,8 +64,6 @@ with open('./Datasets/'+setSize+'/UserMovieDB.pkl','rb') as filmReviews:
     reviewDF = pickle.load(filmReviews)
     reviewDF = reviewDF[["title","userId","tmdbId","rating"]]
 
-
-
 tmdbIDs = pd.Series([862,8467,2493,680,1858,8966,597,9012,17473,603])
 defaultMovies = {"Poster":['https://m.media-amazon.com/images/M/MV5BMDU2ZWJlMjktMTRhMy00ZTA5LWEzNDgtYmNmZTEwZTViZWJkXkEyXkFqcGdeQXVyNDQ2OTk4MzI@._V1_.jpg',
                "https://m.media-amazon.com/images/I/91jhEwcQf2L._AC_UF894,1000_QL80_.jpg",
