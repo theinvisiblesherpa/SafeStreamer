@@ -63,6 +63,9 @@ with open('./Datasets/'+setSize+'/filmWTrigs.pkl','rb') as filmTrigs:
 with open('./Datasets/'+setSize+'/UserMovieDB.pkl','rb') as filmReviews:
     reviewDF = pickle.load(filmReviews)
     reviewDF = reviewDF[["title","userId","tmdbId","rating"]]
+#    reviewDF = reviewDF[reviewDF['userId'] %  2 == 0]
+ #   with open('./Datasets/'+setSize+'/UserMovieDBHalf.pkl','wb') as filmTrigs:
+  #      pickle.dump(reviewDF, filmTrigs)
 
 tmdbIDs = pd.Series([862,8467,2493,680,1858,8966,597,9012,17473,603])
 defaultMovies = {"Poster":['https://m.media-amazon.com/images/M/MV5BMDU2ZWJlMjktMTRhMy00ZTA5LWEzNDgtYmNmZTEwZTViZWJkXkEyXkFqcGdeQXVyNDQ2OTk4MzI@._V1_.jpg',
