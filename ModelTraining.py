@@ -21,7 +21,7 @@ def bayes_sum(N, mu):
     return lambda x: (x.sum() + mu*N) / (x.count() + N)
 
 
-if not os.path.isfile("./Datasets/"+setSize+"/UserMovieDB.pkl", 'wb'):
+if not os.path.isfile("./Datasets/"+setSize+"/UserMovieDB.pkl"):
 
     movies = pd.read_csv("./Datasets/"+setSize+"/movies.csv")
     links = pd.read_csv("./Datasets/"+setSize+"/links.csv",usecols=['movieId','tmdbId'])
@@ -37,7 +37,8 @@ if not os.path.isfile("./Datasets/"+setSize+"/UserMovieDB.pkl", 'wb'):
     with open("./Datasets/"+setSize+"/UserMovieDB.pkl", 'wb') as UserMoviePick:    
         pickle.dump(userReviews, UserMoviePick)
 else:
-    userReviews = pickle.load("./Datasets/"+setSize+"/UserMovieDB.pkl")
+    with open("./Datasets/"+setSize+"/UserMovieDB.pkl", 'rb') as UserMoviePick:    
+        userReviews = pickle.load(UserMoviePick)
 
 # Train nearest neighbors model
 def trainNNModel(inData):
