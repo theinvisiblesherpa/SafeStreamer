@@ -1,20 +1,20 @@
+"""
+Created on Mon Jan 15 10:48:57 2024
+
+@author: JamHeinlein
+"""
+
 import streamlit as st
 import pandas as pd
-import os
+import os, sys
 from sklearn.feature_extraction import DictVectorizer
 from ModelTraining import trainNNModel,getFilmSuggestions
+import pickle, joblib
 
 st.title('Safe Streamer')
 st.markdown("Please rate the following movies, select your preferred genres, and select the content you wish to avoid. Click the button below and receive your recommendations!")
-import pickle
-import joblib
 
-use_full = True
-
-if use_full:
-    setSize = "large"
-else: 
-    setSize = "small"
+setSize = sys.argv[1]
 
 # List of all potential Triggers
 with open('./Datasets/'+setSize+'/TrigList.pkl','rb') as trigPick:
@@ -78,15 +78,6 @@ defaultMovies = {"Poster":['https://m.media-amazon.com/images/M/MV5BMDU2ZWJlMjkt
     "Your Rating":[None,None]*5}
 inputDB = pd.DataFrame(defaultMovies)
 
-# Create Model If Doesn't Exist
-# Only train on the sample movies given to not penalize being similar to users who rated more ! 
-if not os.path.isfile("./Datasets/"+setSize+"/NNModel.joblib"):
-    newFeatures = transformFeatures(reviewDF[reviewDF['tmdbId'].isin([862,8467,2493,680,1858,8966,597,9012,17473,603])])
-    trainedModel = trainNNModel(newFeatures)
-    joblib.dump(trainedModel, "./Datasets/"+setSize+"/NNModel.joblib")
-else:
-    trainedModel = joblib.load("./Datasets/"+setSize+"/NNModel.joblib")
-
 def filterMacro(selectFilterList, removeFilterList, dataframe):
    outDF = dataframe
 
@@ -141,6 +132,14 @@ def transformFeatures(inDF):
 
     return features
 
+# Create Model If Doesn't Exist
+# Only train on the sample movies given to not penalize being similar to users who rated more ! 
+if not os.path.isfile("./Datasets/"+setSize+"/NNModel.joblib"):
+    newFeatures = transformFeatures(reviewDF[reviewDF['tmdbId'].isin([862,8467,2493,680,1858,8966,597,9012,17473,603])])
+    trainedModel = trainNNModel(newFeatures)
+    joblib.dump(trainedModel, "./Datasets/"+setSize+"/NNModel.joblib")
+else:
+    trainedModel = joblib.load("./Datasets/"+setSize+"/NNModel.joblib")
 
 # Read in User Reviews
 # Find Nearest Neighbors 

@@ -3,18 +3,14 @@
 """
 Created on Mon Feb  5 17:03:36 2024
 
-@author: JamesHeinlein
+@author: JamHeinlein
 """
 
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
-import pickle
+import pickle, sys
 
-use_full = False
-if use_full:
-    setSize = "large"
-else: 
-    setSize = "small"
+setSize = sys.argv[1]
 
 def bayes_sum(N, mu):
     return lambda x: (x.sum() + mu*N) / (x.count() + N)
