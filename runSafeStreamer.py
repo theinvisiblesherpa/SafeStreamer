@@ -1,19 +1,20 @@
+"""
+Created on Mon Jan 15 10:48:57 2024
+
+@author: JamHeinlein
+"""
+
 import streamlit as st
 import pandas as pd
-import os
+import os, sys
 from sklearn.feature_extraction import DictVectorizer
 from ModelTraining import trainNNModel,getFilmSuggestions
+import pickle, joblib
 
 st.title('Safe Streamer')
 st.markdown("Please rate the following movies, select your preferred genres, and select the content you wish to avoid. Click the button below and receive your recommendations!")
-import pickle
 
-use_full = False
-
-if use_full:
-    setSize = "large"
-else: 
-    setSize = "small"
+setSize = sys.argv[1]
 
 # List of all potential Triggers
 with open('./Datasets/'+setSize+'/TrigList.pkl','rb') as trigPick:
@@ -22,8 +23,8 @@ with open('./Datasets/'+setSize+'/TrigList.pkl','rb') as trigPick:
 # List of all potential Genres
 with open('./Datasets/'+setSize+'/GenreList.pkl','rb') as genrePick:
     genreList = pickle.load(genrePick)
-    genreList.remove('IMAX')
-    genreList.remove('(no genres listed)')
+#    genreList.remove('IMAX')
+#    genreList.remove('(no genres listed)')
 
 if not os.path.isfile("./Datasets/"+setSize+"/filmWTrigs.pkl"):
 
@@ -58,8 +59,10 @@ with open('./Datasets/'+setSize+'/UserMovieDB.pkl','rb') as filmReviews:
     reviewDF = pickle.load(filmReviews)
     reviewDF = reviewDF[["title","userId","tmdbId","rating"]]
 
-tmdbIDs = pd.Series([862,8467,2493,680,1858,8966,597,1795,17473,603])
-d = {"Poster":['https://m.media-amazon.com/images/M/MV5BMDU2ZWJlMjktMTRhMy00ZTA5LWEzNDgtYmNmZTEwZTViZWJkXkEyXkFqcGdeQXVyNDQ2OTk4MzI@._V1_.jpg',
+
+
+tmdbIDs = pd.Series([862,8467,2493,680,1858,8966,597,9012,17473,603])
+defaultMovies = {"Poster":['https://m.media-amazon.com/images/M/MV5BMDU2ZWJlMjktMTRhMy00ZTA5LWEzNDgtYmNmZTEwZTViZWJkXkEyXkFqcGdeQXVyNDQ2OTk4MzI@._V1_.jpg',
                "https://m.media-amazon.com/images/I/91jhEwcQf2L._AC_UF894,1000_QL80_.jpg",
                 "https://m.media-amazon.com/images/I/7116Aa2ZkRL._AC_UF894,1000_QL80_.jpg",
                "https://m.media-amazon.com/images/S/pv-target-images/dbb9aff6fc5fcd726e2c19c07f165d40aa7716d1dee8974aae8a0dad9128d392.jpg",
@@ -73,28 +76,8 @@ d = {"Poster":['https://m.media-amazon.com/images/M/MV5BMDU2ZWJlMjktMTRhMy00ZTA5
 
                "Title": ["Toy Story","Dumb and Dumber","The Princess Bride","Pulp Fiction", "Transformers","Twilight","Titanic","Jackass","The Room","The Matrix"],
     "Your Rating":[None,None]*5}
-thisData = pd.DataFrame(d)
+inputDB = pd.DataFrame(defaultMovies)
 
-userinfo = st.data_editor(
-    thisData,
-    column_config={
-            "Poster": st.column_config.ImageColumn(
-                "Preview Image", help="Streamlit app preivew", width ="medium",
-            ),
-            "Your Rating": st.column_config.NumberColumn(
-                min_value=1,
-                max_value =5,
-                step = 1.0,
-                format = "%d ⭐"
-            ),
-            "Title": st.column_config.TextColumn(
-                width="medium"
-            )
-        },
-    disabled=["Poster","Title"],
-hide_index=True
-)
-    
 def filterMacro(selectFilterList, removeFilterList, dataframe):
    outDF = dataframe
 
@@ -120,7 +103,7 @@ def selectFilter(filterOptions, dataframe):
 
 # Return film suggestions based on user reviews
 def printResults():
-    filmSuggs = returnSuggestions(userinfo,reviewDF)
+    filmSuggs = returnSuggestions()
     outDF = filterMacro(selectFilters,removeFilters,filmSuggs)
     st.dataframe(
         #filterMacro(selectFilters,removeFilters,filmList).head(20),
@@ -129,19 +112,17 @@ def printResults():
     hide_index=True
     )
 
-# Add New User to Review DB 
-def addUserReviews(inDF,reviewDF):
+# Formate the New User Reivews for NN Algo 
+def formatUserReviews(inDF):
+
     # Add movie IDs  and give the user a default value (large)
     inDF["tmdbId"] = tmdbIDs
     inDF['userId'] = ["10000000"]*10
-    inDF.index=["10000000"]*10
-    inDF = inDF[["Title","Your Rating","userId","tmdbId"]]
 
-    inDF = inDF.rename(columns={"Your Rating": "rating","Title":"title"})
-    
-    updatedDF = pd.concat([inDF,reviewDF], ignore_index=True)
+    inDF = inDF[["Title","Your Rating","userId","tmdbId"]]
+    inDF = inDF.rename(columns={"Your Rating": "rating","Title":"title"}).fillna(0)
  
-    return updatedDF
+    return inDF
 
 # Vectorize Reviews
 def transformFeatures(inDF):
@@ -149,27 +130,27 @@ def transformFeatures(inDF):
     dataMatrix = inDF.groupby("userId").apply(lambda items: {i.tmdbId: i.rating for i in items.itertuples()}) 
     features = DictVectorizer().fit_transform(dataMatrix)
 
-    return features, dataMatrix
+    return features
+
+# Create Model If Doesn't Exist
+# Only train on the sample movies given to not penalize being similar to users who rated more ! 
+if not os.path.isfile("./Datasets/"+setSize+"/NNModel.joblib"):
+    newFeatures = transformFeatures(reviewDF[reviewDF['tmdbId'].isin([862,8467,2493,680,1858,8966,597,9012,17473,603])])
+    trainedModel = trainNNModel(newFeatures)
+    joblib.dump(trainedModel, "./Datasets/"+setSize+"/NNModel.joblib")
+else:
+    trainedModel = joblib.load("./Datasets/"+setSize+"/NNModel.joblib")
 
 # Read in User Reviews
-# Add user reviews to existing DB
-# Train KNN Algo
+# Find Nearest Neighbors 
+# Find Movies of NN
 # Return results
-def returnSuggestions(inDF, revDF):
+def returnSuggestions():
    
-    newUserReviews = addUserReviews(inDF,revDF)
-    newUserReviews = newUserReviews.fillna(0)
-    
-    # Only train on the sample movies given to not penalize being similar to users who rated more ! 
-    trainingReviews = newUserReviews[newUserReviews['tmdbId'].isin([862,8467,2493,680,1858,8966,597,1795,17473,603])]
-    #newFeatures, newDataMatrix = transformFeatures(newUserReviews)
-    newFeatures, newDataMatrix = transformFeatures(trainingReviews)
+    newUserReviews = formatUserReviews(userinfo)
+    newUserFeatures = transformFeatures(newUserReviews)
 
-    newUserID = newFeatures.shape[0]-1 # New user is added to the end of the DF 
-    trainedModel = trainNNModel(newFeatures)
-
-    filmSuggestions = getFilmSuggestions(newUserID, newFeatures, newUserReviews, reviewDF, trainedModel)
-#    filmSuggestions = getFilmSuggestions(newUserID, newFeatures, newDataMatrix, reviewDF, trainedModel)
+    filmSuggestions = getFilmSuggestions(newUserFeatures, reviewDF, trainedModel)
     filmSuggestions = pd.merge(filmSuggestions,filmList, how='inner', on='tmdbId', suffixes=('','_copy'))[['title','genres','Triggers']]
 
     return filmSuggestions
@@ -188,4 +169,29 @@ with st.sidebar:
     removeFilters = [trigSet]
     allFilters = [selectFilters, removeFilters]
 
-st.button("Get My Results!", on_click=printResults)
+if __name__ == "__main__":
+    
+    with st.form("ReviewForm",border=False):
+        userinfo = st.data_editor(
+        inputDB,
+        column_config={
+            "Poster": st.column_config.ImageColumn(
+                "Preview Image", help="Streamlit app preivew", width ="medium",
+            ),
+            "Your Rating": st.column_config.NumberColumn(
+                min_value=1,
+                max_value =5,
+                step = 1.0,
+                format = "%d ⭐"
+            ),
+            "Title": st.column_config.TextColumn(
+                width="medium"
+            )
+        },
+        disabled=["Poster","Title"],
+        hide_index=True
+        )
+        submitted =  st.form_submit_button("Get My Results")
+    if submitted:
+        printResults()
+

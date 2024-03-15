@@ -3,7 +3,7 @@
 """
 Created on Mon Jan 15 10:48:57 2024
 
-@author: JamesHeinlein
+@author: JamHeinlein
 """
 
 import requests

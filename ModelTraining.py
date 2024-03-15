@@ -3,18 +3,14 @@
 """
 Created on Mon Feb  5 17:03:36 2024
 
-@author: JamesHeinlein
+@author: JamHeinlein
 """
 
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
-import pickle
+import pickle, sys
 
-use_full = True
-if use_full:
-    setSize = "large"
-else: 
-    setSize = "small"
+setSize = sys.argv[1]
 
 def bayes_sum(N, mu):
     return lambda x: (x.sum() + mu*N) / (x.count() + N)
@@ -36,27 +32,27 @@ with open("./Datasets/"+setSize+"/UserMovieDB.pkl", 'wb') as UserMoviePick:
 
 # Train nearest neighbors model
 def trainNNModel(inData):
-    userModel= NearestNeighbors(n_neighbors=25,
+    userModel= NearestNeighbors(n_neighbors=20,
                                    metric='cosine',
-                                   algorithm='brute',
+                                   algorithm='auto',
                                    n_jobs=-1)
     userModel.fit(inData)
     return userModel
 
-def getFilmSuggestions(userID, features, dataMatrix, revDF, model):
+def getFilmSuggestions(newUserFeatures, revDF, model):
     # Get nearest neighbors and collect all the reviews associated to neighbors
-    dists, indices = model.kneighbors(features[dataMatrix.index.get_loc(userID), :])
-    neighbors = [dataMatrix.index[i] for i in indices[0]][1:]
+    indices = model.kneighbors(newUserFeatures, return_distance=False)
+    neighbors = [revDF.index[i] for i in indices[0]]
     ratings_grp = revDF[revDF['userId'].isin(neighbors)].groupby('title')[['tmdbId','rating']]
     
-    suggestions = ratings_grp.aggregate({'rating':bayes_sum(1, 3.69),'tmdbId':'mean'}).sort_values(by='rating',ascending=False)
+    suggestions = ratings_grp.aggregate({'rating':bayes_sum(1, 3.5),'tmdbId':'mean'}).sort_values(by='rating',ascending=False)
     
     # Optional other metric
     #suggestions = ratings_grp.aggregate({'rating':'count','tmdbId':'mean'}).sort_values(by='rating',ascending=False)
 
-    suggestions = suggestions.dropna()
         
-    # Dont recommend movies from the base list
+    # Dont recommend movies from the base list    
+    suggestions = suggestions.dropna()
     suggestions = suggestions.astype({'tmdbId':'int32'})
-    suggestions = suggestions[~suggestions['tmdbId'].isin([862,8467,2493,680,1858,8966,597,1795,17473,603])]
+    suggestions = suggestions[~suggestions['tmdbId'].isin([862,8467,2493,680,1858,8966,597,9012,17473,603])]
     return suggestions

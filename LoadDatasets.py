@@ -3,20 +3,15 @@
 """
 Created on Wed Dec  6 11:46:33 2023
 
-@author: JamesHeinlein
+@author: JamHeinlein
 """
 
 import pandas as pd
 import CallDtDDAPI as dtdd
-import os
+import os,sys
 import pickle
 
-use_full = False
-
-if use_full:
-    setSize = "large"
-else: 
-    setSize = "small"
+setSize = sys.argv[1]
 
 movies = pd.read_csv("./Datasets/"+setSize+"/movies.csv")
 links = pd.read_csv("./Datasets/"+setSize+"/links.csv",usecols=['movieId','tmdbId'])
