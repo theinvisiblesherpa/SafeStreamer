@@ -55,4 +55,5 @@ def getFilmSuggestions(newUserFeatures, revDF, model):
     suggestions = suggestions.dropna()
     suggestions = suggestions.astype({'tmdbId':'int32'})
     suggestions = suggestions[~suggestions['tmdbId'].isin([862,8467,2493,680,1858,8966,597,9012,17473,603])]
+
     return suggestions
