@@ -5,10 +5,20 @@ This application is intended for people who have difficulty selecting a movie to
 
 ## Dependencies
 SafeStreamer requires the following packages to function:
+
+
 'streamlit==1.30.0'
+
+
 'numpy==1.23.5'
+
+
 'pandas==2.2.1'
+
+
 'Requests==2.31.0'
+
+
 'scikit_learn==1.3.0'
 
 ## Running Instructions
