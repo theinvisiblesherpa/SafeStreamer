@@ -14,7 +14,7 @@ import pickle, joblib
 st.title('Safe Streamer')
 st.markdown("Please rate the following movies, select your preferred genres, and select the content you wish to avoid. Click the button below and receive your recommendations!")
 
-use_full = False
+use_full = True
 
 if use_full:
     setSize = "large"
