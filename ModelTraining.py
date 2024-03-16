@@ -36,9 +36,9 @@ if not os.path.isfile("./Datasets/"+setSize+"/UserMovieDB.pkl"):
 
     with open("./Datasets/"+setSize+"/UserMovieDB.pkl", 'wb') as UserMoviePick:    
         pickle.dump(userReviews, UserMoviePick)
-else:
-    with open("./Datasets/"+setSize+"/UserMovieDB.pkl", 'rb') as UserMoviePick:    
-        userReviews = pickle.load(UserMoviePick)
+#else:
+#    with open("./Datasets/"+setSize+"/UserMovieDB.pkl", 'rb') as UserMoviePick:    
+#        userReviews = pickle.load(UserMoviePick)
 
 # Train nearest neighbors model
 def trainNNModel(inData):
