@@ -26,7 +26,7 @@ s3 = boto3.resource(
 st.title('Safe Streamer')
 st.markdown("Please rate the following movies on a scale from 1 to 5 stars. Select your preferred genres and the content you wish to avoid in the sidebar. Finally, click the button below and receive your recommendations!")
 
-use_full = False
+use_full = True
 use_S3 = True
 
 if use_full:
