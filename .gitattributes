@@ -1,15 +1,1 @@
 
-Datasets/small/GenreList.pkl filter=lfs diff=lfs merge=lfs -text
-Datasets/small/TrigDFList.pkl filter=lfs diff=lfs merge=lfs -text
-Datasets/small/filmWTrigs.pkl filter=lfs diff=lfs merge=lfs -text
-Datasets/small/links.csv filter=lfs diff=lfs merge=lfs -text
-Datasets/small/README.txt filter=lfs diff=lfs merge=lfs -text
-Datasets/small/TrigList.pkl filter=lfs diff=lfs merge=lfs -text
-Datasets/small/FilmList.pkl filter=lfs diff=lfs merge=lfs -text
-Datasets/small/TrigInfo.pkl filter=lfs diff=lfs merge=lfs -text
-Datasets/small/NNModel.joblib filter=lfs diff=lfs merge=lfs -text
-Datasets/small/TrigCond.pkl filter=lfs diff=lfs merge=lfs -text
-Datasets/small/UserMovieDB.pkl filter=lfs diff=lfs merge=lfs -text
-Datasets/small/movies.csv filter=lfs diff=lfs merge=lfs -text
-Datasets/small/ratings.csv filter=lfs diff=lfs merge=lfs -text
-Datasets/small/tags.csv filter=lfs diff=lfs merge=lfs -text
