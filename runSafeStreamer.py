@@ -89,8 +89,8 @@ else:
     filmListS3 = s3.Bucket('safestreamerdata').Object('large/filmWTrigs.pkl').get()
     filmList = pickle.load(filmListS3['Body'])
 
-    reviewDFS3 = s3.Bucket('safestreamerdata').Object('large/UserMovieDB.pkl').get()
-    reviewDF = pickle.load(reviewDFS3['Body'])
+#    reviewDFS3 = s3.Bucket('safestreamerdata').Object('large/UserMovieDB.pkl').get()
+#    reviewDF = pickle.load(reviewDFS3['Body'])
 
 tmdbIDs = pd.Series([862,8467,2493,680,1858,8966,597,9012,17473,603])
 defaultMovies = {"Poster":['https://m.media-amazon.com/images/M/MV5BMDU2ZWJlMjktMTRhMy00ZTA5LWEzNDgtYmNmZTEwZTViZWJkXkEyXkFqcGdeQXVyNDQ2OTk4MzI@._V1_.jpg',
@@ -134,6 +134,8 @@ def selectFilter(filterOptions, dataframe):
 
 # Return film suggestions based on user reviews
 def printResults():
+    reviewDFS3 =s3.Bucket('safestreamerdata').Object('large/UserMovieDB.pkl').get()
+    reviewDF = pickle.load(reviewDFS3['Body'])
     filmSuggs = returnSuggestions()
     outDF = filterMacro(selectFilters,removeFilters,filmSuggs)
     st.dataframe(
