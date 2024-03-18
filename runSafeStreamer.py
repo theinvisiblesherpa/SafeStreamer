@@ -34,63 +34,65 @@ if use_full:
 else: 
     setSize = "small"
 
-if not use_S3:
-    # List of all potential Triggers
-    with open('./Datasets/'+setSize+'/TrigList.pkl','rb') as trigPick:
-        trigList = pickle.load(trigPick)
+@st.cache_data(persist=True)
+def loadDatasets(): 
+    if not use_S3:
+        # List of all potential Triggers
+        with open('./Datasets/'+setSize+'/TrigList.pkl','rb') as trigPick:
+            trigList = pickle.load(trigPick)
 
-    # List of all potential Genres
-    with open('./Datasets/'+setSize+'/GenreList.pkl','rb') as genrePick:
-        genreList = pickle.load(genrePick)
-    #    genreList.remove('IMAX')
-    #    genreList.remove('(no genres listed)')
+        # List of all potential Genres
+        with open('./Datasets/'+setSize+'/GenreList.pkl','rb') as genrePick:
+            genreList = pickle.load(genrePick)
 
+        if not os.path.isfile("./Datasets/"+setSize+"/filmWTrigs.pkl"):
 
-    if not os.path.isfile("./Datasets/"+setSize+"/filmWTrigs.pkl"):
+            # List of all Films 
+            with open('./Datasets/'+setSize+'/FilmList.pkl','rb') as filmPick:
+                filmList = pickle.load(filmPick)
+                filmList = filmList[["title","genres","tmdbId"]]
 
-        # List of all Films 
-        with open('./Datasets/'+setSize+'/FilmList.pkl','rb') as filmPick:
-            filmList = pickle.load(filmPick)
-            filmList = filmList[["title","genres","tmdbId"]]
+            # DF of Triggers in a given movie
+            with open('./Datasets/'+setSize+'/TrigCond.pkl','rb') as trigDFPick:
+                trigDF = pickle.load(trigDFPick)
 
-        # DF of Triggers in a given movie
-        with open('./Datasets/'+setSize+'/TrigCond.pkl','rb') as trigDFPick:
-            trigDF = pickle.load(trigDFPick)
+            #Combine the TrigDF with the FilmList
+            filmList = pd.merge(filmList, trigDF,how = 'left')
+            filmList = filmList[["title","tmdbId","genres","Triggers"]]
+            filmList = filmList.dropna()
+            filmList = filmList.astype({'tmdbId':'int32'})
 
-        #Combine the TrigDF with the FilmList
-        filmList = pd.merge(filmList, trigDF,how = 'left')
-        filmList = filmList[["title","tmdbId","genres","Triggers"]]
-        filmList = filmList.dropna()
-        filmList = filmList.astype({'tmdbId':'int32'})
+            #Clean up some NaNs for files without information
+            filmList['Triggers'] = filmList['Triggers'].fillna("").apply(list)
+            filmList['Triggers'] = filmList['Triggers'].apply(lambda x: ["None Known"] if len(x) == 0 else x)
+            filmList['Triggers'] = filmList['Triggers'].apply(lambda x: ["None Known"] if x == [""] else x)
 
-        #Clean up some NaNs for files without information
-        filmList['Triggers'] = filmList['Triggers'].fillna("").apply(list)
-        filmList['Triggers'] = filmList['Triggers'].apply(lambda x: ["None Known"] if len(x) == 0 else x)
-        filmList['Triggers'] = filmList['Triggers'].apply(lambda x: ["None Known"] if x == [""] else x)
+            with open('./Datasets/'+setSize+'/filmWTrigs.pkl','wb') as filmTrigs:
+                pickle.dump(filmList,filmTrigs)
 
-        with open('./Datasets/'+setSize+'/filmWTrigs.pkl','wb') as filmTrigs:
-            pickle.dump(filmList,filmTrigs)
+        with open('./Datasets/'+setSize+'/filmWTrigs.pkl','rb') as filmTrigs:
+            filmList = pickle.load(filmTrigs)
 
-    with open('./Datasets/'+setSize+'/filmWTrigs.pkl','rb') as filmTrigs:
-        filmList = pickle.load(filmTrigs)
+        #Review Pickle
+        with open('./Datasets/'+setSize+'/UserMovieDB.pkl','rb') as filmReviews:
+            reviewDF = pickle.load(filmReviews)
+            reviewDF = reviewDF[["title","userId","tmdbId","rating"]]
 
-    #Review Pickle
-    with open('./Datasets/'+setSize+'/UserMovieDB.pkl','rb') as filmReviews:
-        reviewDF = pickle.load(filmReviews)
-        reviewDF = reviewDF[["title","userId","tmdbId","rating"]]
+    else:
+        genreListS3 = s3.Bucket('safestreamerdata').Object('large/GenreList.pkl').get()
+        genreList = pickle.load(genreListS3['Body'])
 
-else:
-    genreListS3 = s3.Bucket('safestreamerdata').Object('large/GenreList.pkl').get()
-    genreList = pickle.load(genreListS3['Body'])
+        trigListS3 = s3.Bucket('safestreamerdata').Object('large/TrigList.pkl').get()
+        trigList = pickle.load(trigListS3['Body'])
 
-    trigListS3 = s3.Bucket('safestreamerdata').Object('large/TrigList.pkl').get()
-    trigList = pickle.load(trigListS3['Body'])
+        filmListS3 = s3.Bucket('safestreamerdata').Object('large/filmWTrigs.pkl').get()
+        filmList = pickle.load(filmListS3['Body'])
 
-    filmListS3 = s3.Bucket('safestreamerdata').Object('large/filmWTrigs.pkl').get()
-    filmList = pickle.load(filmListS3['Body'])
+        reviewDFS3 = s3.Bucket('safestreamerdata').Object('large/UserMovieDB.pkl').get()
+        reviewDF = pickle.load(reviewDFS3['Body'])
+    return genreList, trigList, filmList, reviewDF
 
-#    reviewDFS3 = s3.Bucket('safestreamerdata').Object('large/UserMovieDB.pkl').get()
-#    reviewDF = pickle.load(reviewDFS3['Body'])
+genreList, trigList, filmList, reviewDF = loadDatasets()
 
 tmdbIDs = pd.Series([862,8467,2493,680,1858,8966,597,9012,17473,603])
 defaultMovies = {"Poster":['https://m.media-amazon.com/images/M/MV5BMDU2ZWJlMjktMTRhMy00ZTA5LWEzNDgtYmNmZTEwZTViZWJkXkEyXkFqcGdeQXVyNDQ2OTk4MzI@._V1_.jpg',
@@ -134,8 +136,6 @@ def selectFilter(filterOptions, dataframe):
 
 # Return film suggestions based on user reviews
 def printResults():
-    reviewDFS3 =s3.Bucket('safestreamerdata').Object('large/UserMovieDB.pkl').get()
-    reviewDF = pickle.load(reviewDFS3['Body'])
     filmSuggs = returnSuggestions()
     outDF = filterMacro(selectFilters,removeFilters,filmSuggs)
     st.dataframe(
